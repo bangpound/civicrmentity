@@ -1,0 +1,5 @@
+name = "CiviCRM entities"
+description = "WTF."
+core = "7.x"
+dependencies[] = "civicrm"
+files[] = CiviCRMEntityController.inc

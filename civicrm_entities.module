@@ -1,0 +1,22 @@
+<?php
+
+function civicrm_entities_entity_info() {
+  $info = array();
+  if (!civicrm_initialize()) {
+    return;
+  }
+  require_once 'api/api.php';
+  $entities = civicrm_api('Entity', 'Get', array('version' => 3));
+  foreach ($entities['values'] as $entity_type) {
+    $info['civicrm_'. $entity_type] = array(
+      'label' => $entity_type,
+      'controller class' => 'CiviCRMEntityController',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+      'static cache' => FALSE,
+    );
+  }
+  return $info;
+}
