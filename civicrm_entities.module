@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Implements hook_entity_info().
+ */
 function civicrm_entities_entity_info() {
   $info = array();
   if (!civicrm_initialize()) {
@@ -7,16 +10,91 @@ function civicrm_entities_entity_info() {
   }
   require_once 'api/api.php';
   $entities = civicrm_api('Entity', 'Get', array('version' => 3));
-  foreach ($entities['values'] as $entity_type) {
-    $info['civicrm_'. $entity_type] = array(
-      'label' => $entity_type,
+  foreach ($entities['values'] as $value) {
+    $entity_type = $value;
+
+    // Remove camel case for entity type.
+    $value[0] = strtolower($value[0]);
+    $func = create_function('$c', 'return "_" . strtolower($c[1]);');
+    $key = preg_replace_callback('/([A-Z])/', $func, $value);
+
+    $value = $entity_type;
+
+    // Remove camel case for label.
+    $func = create_function('$c', 'return " " . $c[1];');
+    $label = preg_replace_callback('/([A-Z])/', $func, $value);
+
+    $info['civicrm_'. $key] = array(
+      'label' => $label,
       'controller class' => 'CiviCRMEntityController',
       'fieldable' => TRUE,
       'entity keys' => array(
         'id' => 'id',
       ),
+      'bundles' => array(
+        'civicrm_'. $key => array(
+          'label' => $label,
+          'admin' => array(
+            'path' => 'admin/structure/civicrm/'. str_replace('_', '-', $key),
+          ),
+        ),
+      ),
       'static cache' => FALSE,
     );
   }
   return $info;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function civicrm_entities_menu() {
+  $items = array();
+  $items['admin/structure/civicrm'] = array(
+    'title' => 'CiviCRM',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('access administration pages'),
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function civicrm_entities_menu_alter(&$items) {
+  if (!civicrm_initialize()) {
+    return;
+  }
+  require_once 'api/api.php';
+  $entities = civicrm_api('Entity', 'Get', array('version' => 3));
+  foreach ($entities['values'] as $value) {
+    $entity_type = $value;
+
+    // Remove camel case for entity type.
+    $value[0] = strtolower($value[0]);
+    $func = create_function('$c', 'return "_" . strtolower($c[1]);');
+    $key = preg_replace_callback('/([A-Z])/', $func, $value);
+
+    $value = $entity_type;
+
+    // Remove camel case for label.
+    $func = create_function('$c', 'return " " . $c[1];');
+    $label = preg_replace_callback('/([A-Z])/', $func, $value);
+
+    $entity_info = entity_get_info('civicrm_'. $key);
+    foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
+      if (isset($bundle_info['admin'])) {
+
+        // Get the base path and access.
+        $path = $bundle_info['admin']['path'];
+        $items[$path] = $items[$path .'/fields'];
+        $items[$path]['type'] = MENU_NORMAL_ITEM;
+        $items[$path]['title'] = $label;
+        $items[$path .'/fields']['type'] = MENU_DEFAULT_LOCAL_TASK;
+      }
+    }
+  }
 }
