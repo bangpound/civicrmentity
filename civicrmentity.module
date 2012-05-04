@@ -3,7 +3,7 @@
 /**
  * Implements hook_entity_info().
  */
-function civicrm_entities_entity_info() {
+function civicrmentity_entity_info() {
   $info = array();
   if (!civicrm_initialize()) {
     return;
@@ -48,7 +48,7 @@ function civicrm_entities_entity_info() {
 /**
  * Implements hook_menu().
  */
-function civicrm_entities_menu() {
+function civicrmentity_menu() {
   $items = array();
   $items['admin/structure/civicrm'] = array(
     'title' => 'CiviCRM',
@@ -64,7 +64,7 @@ function civicrm_entities_menu() {
 /**
  * Implements hook_menu_alter().
  */
-function civicrm_entities_menu_alter(&$items) {
+function civicrmentity_menu_alter(&$items) {
   if (!civicrm_initialize()) {
     return;
   }
