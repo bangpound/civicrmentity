@@ -22,7 +22,9 @@ function civicrmentity_entity_info() {
     $func = create_function('$c', 'return " " . $c[1];');
     $label = preg_replace_callback('/([A-Z])/', $func, $value);
 
-    $info['civicrm_'. $entity_type] = array(
+    $key = 'civicrm_'. $entity_type;
+
+    $info[$key] = array(
       'label' => $label,
       'controller class' => 'CiviCRMEntityController',
       'fieldable' => TRUE,
@@ -30,7 +32,7 @@ function civicrmentity_entity_info() {
         'id' => 'id',
       ),
       'bundles' => array(
-        'civicrm_'. $entity_type => array(
+        $key => array(
           'label' => $label,
           'admin' => array(
             'path' => 'admin/config/civicrm/entity/'. str_replace('_', '-', $entity_type),
