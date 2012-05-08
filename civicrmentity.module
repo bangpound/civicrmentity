@@ -35,7 +35,7 @@ function civicrmentity_entity_info() {
         'civicrm_'. $key => array(
           'label' => $label,
           'admin' => array(
-            'path' => 'admin/structure/civicrm/'. str_replace('_', '-', $key),
+            'path' => 'admin/config/civicrm/entity/'. str_replace('_', '-', $key),
           ),
         ),
       ),
@@ -50,8 +50,8 @@ function civicrmentity_entity_info() {
  */
 function civicrmentity_menu() {
   $items = array();
-  $items['admin/structure/civicrm'] = array(
-    'title' => 'CiviCRM',
+  $items['admin/config/civicrm/entity'] = array(
+    'title' => 'Entity',
     'type' => MENU_NORMAL_ITEM,
     'page callback' => 'system_admin_menu_block_page',
     'access arguments' => array('access administration pages'),
