@@ -20,16 +20,27 @@ function civicrmentity_entity_info() {
 
     // Remove camel case for label.
     $func = create_function('$c', 'return " " . $c[1];');
-    $label = preg_replace_callback('/([A-Z])/', $func, $value);
+    $label = trim(preg_replace_callback('/([A-Z])/', $func, $value));
 
     $key = 'civicrm_'. $entity_type;
 
     $info[$key] = array(
       'label' => $label,
+      'entity class' => 'Entity',
       'controller class' => 'CiviCRMEntityController',
+      'metadata controller class' => FALSE,
       'fieldable' => TRUE,
+      'entity class' => 'Entity',
+      'admin ui' => array(
+        'path' => 'civicrmentity/'. $entity_type,
+        'controller class' => 'CiviCRMEntityUIController',
+      ),
+      'access callback' => 'civicrmentity_access',
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
       'entity keys' => array(
         'id' => 'id',
+        'label' => 'id',
       ),
       'bundles' => array(
         $key => array(
@@ -50,6 +61,14 @@ function civicrmentity_entity_info() {
   }
   return $info;
 }
+
+/**
+ *
+ */
+function civicrmentity_access($op, $entity = NULL, $account = NULL) {
+  return TRUE;
+}
+
 
 /**
  * Implements hook_menu().
@@ -88,4 +107,82 @@ function civicrmentity_menu_alter(&$items) {
       }
     }
   }
+}
+
+function civicrmentity_form($form, $form_state, $entity, $op, $entity_type) {
+
+  // Add the field related form elements.
+  $form_state['entity'] = $entity;
+  field_attach_form($entity_type, $entity, $form, $form_state);
+
+  $form['actions'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => array('form-actions')),
+    '#weight' => 400,
+  );
+
+  $form['#validate'] = array();
+  $form['#submit'] = array();
+  $form['#validate'][] = 'civicrmentity_form_validate';
+  $form['#submit'][] = 'civicrmentity_form_submit';
+
+  // We add the form's #submit array to this button along with the actual submit
+  // handler to preserve any submit handlers added by a form callback_wrapper.
+  $submit = array();
+
+  if (!empty($form['#submit'])) {
+    $submit += $form['#submit'];
+  }
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#submit' => $submit + array(),
+  );
+
+//  if (!empty($model->name)) {
+//    $form['actions']['delete'] = array(
+//      '#type' => 'submit',
+//      '#value' => t('Delete model'),
+//      '#suffix' => l(t('Cancel'), 'admin/content/models'),
+//      '#submit' => $submit + array('model_form_submit_delete'),
+//      '#weight' => 45,
+//    );
+//  }
+
+  // We append the validate handler to #validate in case a form callback_wrapper
+  // is used to add validate handlers earlier.
+  return $form;
+}
+
+/**
+ * Form API validate callback for the entity form
+ */
+function civicrmentity_form_validate(&$form, &$form_state) {
+  $entity = $form_state['entity'];
+  $entity_type = $form_state['entity_type'];
+
+  // Notify field widgets to validate their data.
+  field_attach_form_validate($entity_type, $entity, $form, $form_state);
+}
+
+
+/**
+ * Form API submit callback for the entity form.
+ *
+ * @todo remove hard-coded link
+ */
+function civicrmentity_form_submit(&$form, &$form_state) {
+  $entity_type = $form_state['entity_type'];
+  $entity = entity_ui_controller($entity_type)->entityFormSubmitBuildEntity($form, $form_state);
+  // Save the model and go back to the list of entitys
+
+  // Add in created and changed times.
+  if ($entity->is_new = isset($entity->is_new) ? $entity->is_new : 0){
+    $entity->created = time();
+  }
+
+  $entity->changed = time();
+
+  $entity->save();
 }

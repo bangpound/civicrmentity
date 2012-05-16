@@ -1,6 +1,6 @@
 <?php
 
-class CiviCRMEntityController implements DrupalEntityControllerInterface {
+class CiviCRMEntityController extends EntityAPIController implements EntityAPIControllerInterface {
 
   /**
    * Static cache of entities.
@@ -70,7 +70,7 @@ class CiviCRMEntityController implements DrupalEntityControllerInterface {
    * Constructor: sets basic variables.
    */
   public function __construct($entityType) {
-    $this->entityType = str_replace('civicrm_', '', $entityType);
+    $this->entityType = $entityType;
     $this->entityInfo = entity_get_info($entityType);
     $this->entityCache = array();
     $this->hookLoadArguments = array();
@@ -151,17 +151,27 @@ class CiviCRMEntityController implements DrupalEntityControllerInterface {
             'id' => $id,
             'version' => 3,
           );
-          $result = civicrm_api($this->entityType, 'Get', $params);
-          $queried_entities[$id] = (object) $result['values'][$id];
+          $result = civicrm_api($this->entityInfo['civicrm']['entity'], 'Get', $params);
+          if (!empty($this->entityInfo['entity class'])) {
+            $queried_entities[$id] =  new $this->entityInfo['entity class']($result['values'][$id], $this->entityType);
+          }
+          else {
+            $queried_entities[$id] = (object) $result['values'][$id];
+          }
         }
       }
       else {
         $params = array(
           'version' => 3,
         );
-        $result = civicrm_api($this->entityType, 'Get', $params);
-        foreach ($result['values'] as $id => $entity) {
-          $queried_entities[$id] = (object) $entity;
+        $result = civicrm_api($this->entityInfo['civicrm']['entity'], 'Get', $params);
+        foreach ($result['values'] as $id => $values) {
+          if (!empty($this->entityInfo['entity class'])) {
+            $queried_entities[$id] =  new $this->entityInfo['entity class']($values, $this->entityType);
+          }
+          else {
+            $queried_entities[$id] = (object) $values;
+          }
         }
       }
     }
@@ -282,5 +292,100 @@ class CiviCRMEntityController implements DrupalEntityControllerInterface {
    */
   protected function cacheSet($entities) {
     $this->entityCache += $entities;
+  }
+
+  /**
+   * Implements EntityAPIControllerInterface.
+   *
+   * @param $transaction
+   *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
+   *   in their transaction object.
+   */
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    $entities = $ids ? $this->load($ids) : FALSE;
+    if (!$entities) {
+      // Do nothing, in case invalid or no ids have been passed.
+      return;
+    }
+    // This transaction causes troubles on MySQL, see
+    // http://drupal.org/node/1007830. So we deactivate this by default until
+    // is shipped in a point release.
+    // $transaction = isset($transaction) ? $transaction : db_transaction();
+
+    try {
+      $ids = array_keys($entities);
+
+      //db_delete($this->entityInfo['base table'])
+      //  ->condition($this->idKey, $ids, 'IN')
+      //  ->execute();
+      // Reset the cache as soon as the changes have been applied.
+      $this->resetCache($ids);
+
+      foreach ($entities as $id => $entity) {
+        $this->invoke('delete', $entity);
+      }
+      // Ignore slave server temporarily.
+      // db_ignore_slave();
+    }
+    catch (Exception $e) {
+      if (isset($transaction)) {
+        //$transaction->rollback();
+      }
+      watchdog_exception($this->entityType, $e);
+      throw $e;
+    }
+  }
+
+  /**
+   * Implements EntityAPIControllerInterface.
+   *
+   * @param $transaction
+   *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
+   *   in their transaction object.
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    //$transaction = isset($transaction) ? $transaction : db_transaction();
+    try {
+      // Load the stored entity, if any.
+      if (!empty($entity->{$this->idKey}) && !isset($entity->original)) {
+        // In order to properly work in case of name changes, load the original
+        // entity using the id key if it is available.
+        $entity->original = entity_load_unchanged($this->entityType, $entity->{$this->idKey});
+      }
+
+      $this->invoke('presave', $entity);
+
+      if (!empty($entity->{$this->idKey}) && empty($entity->is_new)) {
+        //$return = drupal_write_record($this->entityInfo['base table'], $entity, $this->idKey);
+        $this->resetCache(array($entity->{$this->idKey}));
+        $this->invoke('update', $entity);
+      }
+      else {
+        //$return = drupal_write_record($this->entityInfo['base table'], $entity);
+        $this->invoke('insert', $entity);
+      }
+      // Ignore slave server temporarily.
+      //db_ignore_slave();
+      unset($entity->is_new);
+      unset($entity->original);
+
+      return $return;
+    }
+    catch (Exception $e) {
+      //$transaction->rollback();
+      watchdog_exception($this->entityType, $e);
+      throw $e;
+    }
+  }
+
+  /**
+   * Builds and executes the query for loading.
+   *
+   * @return The results in a Traversable object.
+   */
+  public function query($ids, $conditions, $revision_id = FALSE) {
+    // Build the query.
+    $result = entity_load($this->entityType, $ids);
+    return $result;
   }
 }
