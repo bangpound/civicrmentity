@@ -251,6 +251,36 @@ function civicrmentity_views_api() {
   return array("version" => "3.0");
 }
 
+/**
+ * Implementation of hook_civicrm_pre().
+ *
+ * @param type $op
+ * @param type $objectName
+ * @param type $id
+ * @param type $params
+ */
+function civicrmentity_civicrm_pre($op, $objectName, $id, &$params) {
+  if ($op == 'delete') {
+    switch ($objectName) {
+      case 'Household':
+      case 'Individual':
+      case 'Organization':
+        // This deletes even when the entity is just being trashed.
+        entity_delete('civicrm_contact', $id);
+        break;
+      case 'Group':
+        entity_delete('civicrm_group', $id);
+        break;
+    }
+  }
+}
+
+/**
+ * Implementatin of hook_civicrm_buildForm().
+ *
+ * @param type $formName
+ * @param CRM_Core_Form $form
+ */
 function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
   $entity_link = &drupal_static('civicrmentity_page_formName', '');
   switch ($formName) {
@@ -263,6 +293,14 @@ function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
   }
 }
 
+/**
+ * Implementation of hook_page_build().
+ *
+ * Paired with static caching in civicrmentity_civicrm_buildForm() this is a
+ * very clumsy way to add an edit link to the bottom of a CiviCRM edit form.
+ *
+ * @param type $page
+ */
 function civicrmentity_page_build(&$page) {
   $entity_link = &drupal_static('civicrmentity_page_formName', '');
   if ($entity_link) {
@@ -272,6 +310,11 @@ function civicrmentity_page_build(&$page) {
   }
 }
 
+/**
+ * Implementation of hook_admin_paths().
+ *
+ * @return array
+ */
 function civicrmentity_admin_paths() {
   $paths = array(
     'civicrmentity/*/manage/*' => TRUE,

@@ -9,6 +9,45 @@ class CiviCRMEntityController extends EntityAPIController implements EntityAPICo
    *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
    *   in their transaction object.
    */
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    $entities = $ids ? $this->load($ids) : FALSE;
+    if (!$entities) {
+      // Do nothing, in case invalid or no ids have been passed.
+      return;
+    }
+    // This transaction causes troubles on MySQL, see
+    // http://drupal.org/node/1007830. So we deactivate this by default until
+    // is shipped in a point release.
+    // $transaction = isset($transaction) ? $transaction : db_transaction();
+
+    try {
+      $ids = array_keys($entities);
+
+      // Reset the cache as soon as the changes have been applied.
+      $this->resetCache($ids);
+
+      foreach ($entities as $id => $entity) {
+        $this->invoke('delete', $entity);
+      }
+      // Ignore slave server temporarily.
+      db_ignore_slave();
+    }
+    catch (Exception $e) {
+      if (isset($transaction)) {
+        $transaction->rollback();
+      }
+      watchdog_exception($this->entityType, $e);
+      throw $e;
+    }
+  }
+
+  /**
+   * Implements EntityAPIControllerInterface.
+   *
+   * @param $transaction
+   *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
+   *   in their transaction object.
+   */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     $transaction = isset($transaction) ? $transaction : db_transaction();
     try {
