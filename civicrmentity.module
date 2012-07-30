@@ -9,14 +9,43 @@ function civicrmentity_entity_info() {
     return;
   }
   require_once 'api/api.php';
-  $entities = civicrm_api('Entity', 'Get', array('version' => 3));
-  foreach ($entities['values'] as $value) {
+
+  // Not all CiviCRM entities returned by this function can be Drupal entities. In order
+  // to be supported, a CiviCRM entity operation must trigger hook_civicrm_post.
+  $result = civicrm_api('Entity', 'Get', array('version' => 3));
+  $support = array(
+    //'Activity',
+    //'Contribution',
+    //'ContributionRecur',
+    //'EntityTag',
+    //'Event',
+    'Group',
+    'GroupContact',
+    //'Membership',
+    //'Participant',
+    //'Pledge',
+    //'PledgePayment',
+    //'Profile',
+    //'Relationship',
+    //'Tag',
+    //'UFMatch',
+  );
+  $values = array_intersect($support, array_values($result['values']));
+
+  // Individuals, households and organization contacts are bundles on the basic contact
+  // entity.
+  $values[] = 'Contact';
+
+  foreach ($values as $value) {
 
     // Remove camel case for entity type.
     $entity_type = $value;
     $entity_type[0] = strtolower($entity_type[0]);
     $func = create_function('$c', 'return "_" . strtolower($c[1]);');
     $entity_type = preg_replace_callback('/([A-Z])/', $func, $entity_type);
+    if ($entity_type == 'u_f_match') {
+      $entity_type = 'uf_match';
+    }
 
     // Remove camel case for label.
     $func = create_function('$c', 'return " " . $c[1];');
@@ -26,18 +55,18 @@ function civicrmentity_entity_info() {
 
     $info[$key] = array(
       'label' => $label,
-      'entity class' => 'Entity',
       'controller class' => 'CiviCRMEntityController',
+      'base table' => $key,
       'metadata controller class' => FALSE,
       'fieldable' => TRUE,
-      'entity class' => 'Entity',
+      'entity class' => 'CiviCRMEntity',
       'admin ui' => array(
         'path' => 'civicrmentity/'. $entity_type,
         'controller class' => 'CiviCRMEntityUIController',
       ),
       'access callback' => 'civicrmentity_access',
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
+      //'label callback' => 'entity_class_label',
+      //'uri callback' => 'entity_class_uri',
       'entity keys' => array(
         'id' => 'id',
         'label' => 'id',
@@ -57,8 +86,36 @@ function civicrmentity_entity_info() {
         'entity' => $value,
       ),
       'static cache' => FALSE,
+      'views controller class' => FALSE,
     );
   }
+
+  $info['civicrm_contact']['entity keys']['bundle'] = 'contact_type';
+  $info['civicrm_contact']['entity keys']['label'] = 'display_name';
+  $info['civicrm_contact']['bundle keys']['bundle'] = 'contact_type';
+  $info['civicrm_contact']['bundles'] = array(
+    'Household' => array(
+      'label' => 'Household',
+      'admin' => array(
+        'path' => 'admin/config/civicrm/entity/contact/household',
+      ),
+    ),
+    'Individual' => array(
+      'label' => 'Individual',
+      'admin' => array(
+        'path' => 'admin/config/civicrm/entity/contact/individual',
+      ),
+    ),
+    'Organization' => array(
+      'label' => 'Organization',
+      'admin' => array(
+        'path' => 'admin/config/civicrm/entity/contact/organization',
+      ),
+    ),
+  );
+
+  $info['civicrm_group']['entity keys']['label'] = 'title';
+
   return $info;
 }
 
@@ -185,4 +242,39 @@ function civicrmentity_form_submit(&$form, &$form_state) {
   $entity->changed = time();
 
   $entity->save();
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function civicrmentity_views_api() {
+  return array("version" => "3.0");
+}
+
+function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
+  $entity_link = &drupal_static('civicrmentity_page_formName', '');
+  switch ($formName) {
+    case 'CRM_Contact_Form_Contact':
+      $entity_link = l('Edit', 'civicrmentity/contact/manage/'. $form->_entityId);
+      break;
+    case 'CRM_Group_Form_Edit':
+      $entity_link = l('Edit', 'civicrmentity/group/manage/'. $form->_entityId);
+      break;
+  }
+}
+
+function civicrmentity_page_build(&$page) {
+  $entity_link = &drupal_static('civicrmentity_page_formName', '');
+  if ($entity_link) {
+    $page['content']['entity_link'] = array(
+      '#markup' => $entity_link,
+    );
+  }
+}
+
+function civicrmentity_admin_paths() {
+  $paths = array(
+    'civicrmentity/*/manage/*' => TRUE,
+  );
+  return $paths;
 }

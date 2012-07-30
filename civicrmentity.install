@@ -1,0 +1,48 @@
+<?php
+
+function civicrmentity_schema() {
+  return array();
+}
+
+function civicrmentity_schema_alter(&$schema) {
+  if (civicrm_initialize()) {
+    require_once 'CRM/Utils/Type.php';
+    $tables = array(
+      //'civicrm_activity',
+      //'civicrm_contribution',
+      //'civicrm_contribution_recur',
+      //'civicrm_entity_tag',
+      //'civicrm_event',
+      'civicrm_group' => 'CRM_Contact_DAO_Group',
+      'civicrm_group_contact' => 'CRM_Contact_DAO_GroupContact',
+      'civicrm_contact' => 'CRM_Contact_DAO_Contact',
+      //'civicrm_membership',
+      //'civicrm_participant',
+      //'civicrm_pledge',
+      //'civicrm_pledge_payment',
+      //'civicrm_profile',
+      //'civicrm_relationship',
+      //'civicrm_tag',
+      //'civicrm_uf_match',
+    );
+    foreach ($tables as $table => $className) {
+      $fileName = str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
+      @include_once($fileName); // ignore errors if any
+      $dao = new $className();
+      if (!isset($schema[$table])) {
+        $schema[$table] = array(
+          'name' => $table,
+          'description' => $table,
+          'fields' => array(),
+          'primary key' => array('id'),
+        );
+        foreach ($dao::fields() as $field) {
+          $schema[$table]['fields'][$field['name']] = array(
+            'type' => CRM_Utils_Type::typeToString($field['type']),
+          );
+        }
+        $schema[$table]['fields']['id']['not null'] = TRUE;
+      }
+    }
+  }
+}

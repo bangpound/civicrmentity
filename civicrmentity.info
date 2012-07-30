@@ -5,3 +5,4 @@ dependencies[] = civicrm
 dependencies[] = entity
 files[] = CiviCRMEntityController.inc
 files[] = CiviCRMEntityUIController.inc
+files[] = CiviCRMEntity.inc
