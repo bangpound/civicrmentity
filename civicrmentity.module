@@ -18,7 +18,7 @@ function civicrmentity_entity_info() {
     //'Contribution',
     //'ContributionRecur',
     //'EntityTag',
-    //'Event',
+    'Event',
     'Group',
     'GroupContact',
     //'Membership',
@@ -115,6 +115,7 @@ function civicrmentity_entity_info() {
   );
 
   $info['civicrm_group']['entity keys']['label'] = 'title';
+  $info['civicrm_event']['entity keys']['label'] = 'title';
 
   return $info;
 }
@@ -289,6 +290,9 @@ function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
       break;
     case 'CRM_Group_Form_Edit':
       $entity_link = l('Edit', 'civicrmentity/group/manage/'. $form->_entityId);
+      break;
+    case 'CRM_Event_Form_ManageEvent_EventInfo':
+      $entity_link = l('Edit', 'civicrmentity/event/manage/'. $form->_id);
       break;
   }
 }

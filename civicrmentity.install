@@ -12,7 +12,7 @@ function civicrmentity_schema_alter(&$schema) {
       //'civicrm_contribution',
       //'civicrm_contribution_recur',
       //'civicrm_entity_tag',
-      //'civicrm_event',
+      'civicrm_event' => 'CRM_Event_DAO_Event',
       'civicrm_group' => 'CRM_Contact_DAO_Group',
       'civicrm_group_contact' => 'CRM_Contact_DAO_GroupContact',
       'civicrm_contact' => 'CRM_Contact_DAO_Contact',
