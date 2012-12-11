@@ -5,6 +5,8 @@ function civicrmentity_schema() {
 }
 
 function civicrmentity_schema_alter(&$schema) {
+  $q = $_GET['q'];
+  $_GET['q'] = 'fake/upgrade';
   if (civicrm_initialize()) {
     require_once 'CRM/Utils/Type.php';
     $tables = array(
