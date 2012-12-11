@@ -6,3 +6,4 @@ dependencies[] = entity
 files[] = CiviCRMEntityController.inc
 files[] = CiviCRMEntityUIController.inc
 files[] = CiviCRMEntity.inc
+files[] = civicrmentity_calendar_plugin_row.inc
