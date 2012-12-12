@@ -15,7 +15,7 @@ function civicrmentity_views_plugins_alter(&$plugins) {
       $plugin['module'] = 'civicrmentity';
       $plugin['handler'] = 'civicrmentity_calendar_plugin_row';
       $plugin['file'] = 'civicrmentity_calendar_plugin_row.inc';
-      $plugin['theme'] = $plugins['row']['fields']['theme file'];
+      $plugin['theme'] = $plugins['row']['fields']['theme'];
       $plugin['theme file'] = $plugins['row']['fields']['theme file'];
       $plugin['theme path'] = $plugins['row']['fields']['theme path'];
     }
