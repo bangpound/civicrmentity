@@ -285,16 +285,39 @@ function civicrmentity_civicrm_pre($op, $objectName, $id, &$params) {
  */
 function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
   $entity_link = &drupal_static('civicrmentity_page_formName', '');
+
   switch ($formName) {
     case 'CRM_Contact_Form_Contact':
-      $entity_link = l('Edit', 'civicrmentity/contact/manage/'. $form->_entityId);
+      $entity_type = 'civicrm_contact';
+      $entity_id = $form->_entityId;
       break;
     case 'CRM_Group_Form_Edit':
-      $entity_link = l('Edit', 'civicrmentity/group/manage/'. $form->_entityId);
+      $entity_type = 'civicrm_group';
+      $entity_id = $form->_entityId;
       break;
     case 'CRM_Event_Form_ManageEvent_EventInfo':
-      $entity_link = l('Edit', 'civicrmentity/event/manage/'. $form->_id);
+      $entity_type = 'civicrm_event';
+      $entity_id = $form->_id;
       break;
+    case 'CRM_Contribute_Form_Contribution':
+      $entity_type = 'civicrm_contribution';
+      $entity_id = $form->_id;
+      break;
+  }
+
+  if ($entity_id) {
+    $entity = entity_load_single($entity_type, $entity_id);
+    $entity_info = entity_get_info($entity_type);
+
+    $path = $entity_info['admin ui']['path'] .'/manage/'. $entity_id;
+    $options = array(
+      'attributes' => array(
+        'id' => 'civicrmentity-edit',
+        'class' => 'button',
+      ),
+    );
+
+    $entity_link = l('Edit Drupal entity fields', $path, $options);
   }
 }
 
