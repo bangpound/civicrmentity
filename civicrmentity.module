@@ -66,7 +66,7 @@ function civicrmentity_entity_info() {
       ),
       'access callback' => 'civicrmentity_access',
       //'label callback' => 'entity_class_label',
-      //'uri callback' => 'entity_class_uri',
+      'uri callback' => 'entity_class_uri',
       'entity keys' => array(
         'id' => 'id',
         'label' => 'id',
@@ -116,6 +116,7 @@ function civicrmentity_entity_info() {
 
   $info['civicrm_group']['entity keys']['label'] = 'title';
   $info['civicrm_event']['entity keys']['label'] = 'title';
+  $info['civicrm_event']['entity class'] = 'CiviCRMEvent';
 
   return $info;
 }
