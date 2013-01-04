@@ -315,6 +315,7 @@ function civicrmentity_civicrm_buildForm($formName, CRM_Core_Form &$form) {
         'id' => 'civicrmentity-edit',
         'class' => 'button',
       ),
+      'query' => drupal_get_destination(),
     );
 
     $entity_link = l('Edit Drupal entity fields', $path, $options);
