@@ -40,7 +40,7 @@ function civicrmentity_schema_alter(&$schema) {
         );
         foreach ($dao::fields() as $field) {
           $schema[$table]['fields'][$field['name']] = array(
-            'description' => $field['title'],
+            'description' => isset($field['title']) ? $field['title'] : $field['name'],
             'type' => CRM_Utils_Type::typeToString($field['type']),
           );
         }
