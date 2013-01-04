@@ -244,6 +244,10 @@ function civicrmentity_form_submit(&$form, &$form_state) {
   $entity->changed = time();
 
   $entity->save();
+  $t_args = array(
+    '%label' => entity_label($entity_type, $entity),
+  );
+  drupal_set_message(t('Drupal fields on %label have been updated.', $t_args));
 }
 
 /**
