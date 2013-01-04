@@ -11,7 +11,7 @@ function civicrmentity_schema_alter(&$schema) {
     require_once 'CRM/Utils/Type.php';
     $tables = array(
       //'civicrm_activity',
-      //'civicrm_contribution',
+      'civicrm_contribution' => 'CRM_Contribute_DAO_Contribution',
       //'civicrm_contribution_recur',
       //'civicrm_entity_tag',
       'civicrm_event' => 'CRM_Event_DAO_Event',

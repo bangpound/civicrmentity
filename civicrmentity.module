@@ -15,7 +15,7 @@ function civicrmentity_entity_info() {
   $result = civicrm_api('Entity', 'Get', array('version' => 3));
   $support = array(
     //'Activity',
-    //'Contribution',
+    'Contribution',
     //'ContributionRecur',
     //'EntityTag',
     'Event',
