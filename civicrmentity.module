@@ -287,10 +287,12 @@ function civicrmentity_civicrm_pre($op, $objectName, $id, &$params) {
 function civicrmentity_civicrm_alterContent(&$content, $context, $tplName, &$object) {
 
   // Only operate on forms that are not snippets.
-  if ($context != 'form' || $object->controller->getPrint()) {
+  if ($context != 'form') {
     return;
   }
   $formName = get_class($object);
+
+  $print = $object->controller->getPrint();
 
   switch ($formName) {
     case 'CRM_Contact_Form_Contact':
@@ -302,8 +304,10 @@ function civicrmentity_civicrm_alterContent(&$content, $context, $tplName, &$obj
       $entity_id = $object->_entityId;
       break;
     case 'CRM_Event_Form_ManageEvent_EventInfo':
-      $entity_type = 'civicrm_event';
-      $entity_id = $object->_id;
+      if ($print == CRM_Core_Smarty::PRINT_NOFORM) {
+        $entity_type = 'civicrm_event';
+        $entity_id = $object->_id;
+      }
       break;
     case 'CRM_Contribute_Form_Contribution':
       $entity_type = 'civicrm_contribution';
@@ -326,6 +330,26 @@ function civicrmentity_civicrm_alterContent(&$content, $context, $tplName, &$obj
 
     $entity_link = l(t('Edit Drupal fields'), $path, $options);
     $content .= $entity_link;
+  }
+}
+
+/**
+ * Implement hook_url_outbound_alter().
+ *
+ * @param type $path
+ * @param string $options
+ * @param type $original_path
+ */
+function civicrmentity_url_outbound_alter(&$path, &$options, $original_path) {
+  if (strpos($original_path, 'civicrmentity') === 0 && isset($options['query']) && isset($options['query']['destination'])) {
+    $destination = parse_url($options['query']['destination']);
+    $query = $destination['query'];
+    $destination['query'] = array();
+    parse_str($query, $destination['query']);
+    unset($destination['query']['snippet']);
+    unset($destination['query']['qfKey']);
+    unset($destination['query']['component']);
+    $options['query']['destination'] = $destination['path'] . '?' . drupal_http_build_query($destination['query']);
   }
 }
 
