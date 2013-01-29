@@ -124,10 +124,9 @@ function civicrmentity_entity_info() {
 /**
  *
  */
-function civicrmentity_access($op, $entity = NULL, $account = NULL) {
-  return TRUE;
+function civicrmentity_access($op, $entity = NULL, $account = NULL, $entity_type = '') {
+  return user_access('administer CiviCRM', $account);
 }
-
 
 /**
  * Implements hook_menu().
