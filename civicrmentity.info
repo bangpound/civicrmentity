@@ -1,5 +1,5 @@
 name = "CiviCRM entities"
-description = "WTF."
+description = "Expose some CiviCRM core objects as fieldable entities."
 core = "7.x"
 dependencies[] = civicrm
 dependencies[] = entity
