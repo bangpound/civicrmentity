@@ -167,7 +167,7 @@ function civicrmentity_menu_alter(&$items) {
   }
 }
 
-function civicrmentity_form($form, $form_state, $entity, $op, $entity_type) {
+function civicrmentity_form($form, &$form_state, $entity, $op, $entity_type) {
 
   // Add the field related form elements.
   $form_state['entity'] = $entity;
